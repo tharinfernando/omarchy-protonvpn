@@ -71,3 +71,16 @@ Set it with:
 ```bash
 omarchy bar set tharin.protonvpn refreshIntervalSec 30
 ```
+
+## Removal
+
+```bash
+omarchy plugin disable tharin.protonvpn
+rm ~/.config/omarchy/plugins/tharin.protonvpn   # symlink or copied folder
+```
+
+To also uninstall the CLI dependency:
+
+```bash
+omarchy pkg drop proton-vpn-cli
+```
