@@ -3,6 +3,8 @@
 Status and one-click fastest-server connection for Proton VPN in the Omarchy
 status bar.
 
+![Proton VPN widget preview](preview.png)
+
 ## Features
 
 - Bar icon: theme-colored Proton VPN mark with connected/disconnected state.
