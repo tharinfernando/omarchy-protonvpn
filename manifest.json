@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "tharin.protonvpn",
+  "name": "Proton VPN",
+  "version": "1.0.0",
+  "author": "Tharin Fernando",
+  "license": "MIT",
+  "description": "Proton VPN status, connect/disconnect, and server info in the Omarchy bar.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Proton VPN",
+    "description": "Proton VPN status, connect/disconnect, and server info in the Omarchy bar.",
+    "category": "Network",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "refreshIntervalSec": 30
+    },
+    "schema": [
+      {
+        "key": "refreshIntervalSec",
+        "type": "integer",
+        "label": "Refresh interval (seconds)",
+        "min": 5,
+        "max": 3600,
+        "step": 5,
+        "defaultValue": 30
+      }
+    ]
+  }
+}
