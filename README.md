@@ -1,7 +1,6 @@
-# Proton VPN — Omarchy bar widget
+# Proton VPN Omarchy bar widget
 
-Status and one-click fastest-server connection for Proton VPN in the Omarchy
-status bar.
+Status and one-click fastest-server connection for Proton VPN in the menu bar.
 
 ![Proton VPN widget preview](preview.png)
 
