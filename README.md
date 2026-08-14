@@ -10,11 +10,12 @@ status bar.
   - Connected server and location
   - Server load and protocol
   - Tunnel IP
+  - Collapsible list of free-server countries (click the header or press `s`)
   - Refresh action
 - Left click opens the panel.
 - Right click connects to the fastest eligible Proton server or disconnects.
 - Middle click refreshes status.
-- Keyboard navigation: `j`/`k`, `enter`, `t`, `c`, `r`, and `esc`.
+- Keyboard navigation: `j`/`k`, `enter`, `t`, `c`, `s`, `r`, and `esc`.
 
 ## Backend
 
