@@ -29,6 +29,7 @@ Item {
   property bool toggling: false
 
   readonly property int refreshIntervalSec: intSetting("refreshIntervalSec", 30, 5, 3600)
+  readonly property bool notificationsEnabled: boolSetting("notificationsEnabled", true)
   readonly property bool busy: statusProcess.running || deviceProcess.running || deviceIpProcess.running || toggleProcess.running || whichProcess.running
   readonly property string serverListPath: (Quickshell.env("HOME") || "") + "/.cache/Proton/VPN/serverlist.json"
 
@@ -41,11 +42,31 @@ Item {
   property string _countryOutput: ""
   property var _countryNames: ({})
   property string _serverListText: ""
+  property bool _stateKnown: false
+  property bool _lastConnected: false
 
   function intSetting(name, fallback, min, max) {
     var v = parseInt(settings ? settings[name] : undefined, 10)
     if (isNaN(v)) return fallback
     return Math.max(min, Math.min(max, v))
+  }
+
+  function boolSetting(name, fallback) {
+    if (!settings || settings[name] === undefined || settings[name] === null) return fallback
+    var v = String(settings[name]).toLowerCase()
+    if (v === "true" || v === "1" || v === "on" || v === "yes") return true
+    if (v === "false" || v === "0" || v === "off" || v === "no") return false
+    return fallback
+  }
+
+  // Fires a desktop notification through the shell's notification daemon via
+  // notify-send, so do-not-disturb and popup styling are handled centrally.
+  function notify(summary, body, critical) {
+    if (!notificationsEnabled) return
+    var args = ["notify-send", "--app-name=Proton VPN", "--urgency=" + (critical ? "critical" : "normal")]
+    args.push(String(summary || ""))
+    if (body !== "") args.push(String(body))
+    Quickshell.execDetached(args)
   }
 
   function refresh() {
@@ -97,6 +118,7 @@ Item {
 
   function applyStatus(stdout) {
     var parsed = Model.parseCliStatus(stdout)
+    var prevConnected = root._lastConnected
     connected = parsed.connected
     serverName = parsed.serverName
     serverCity = parsed.serverCity
@@ -108,6 +130,15 @@ Item {
     statusText = connected ? "Connected" : "Disconnected"
     if (connected) refreshDevice()
     else tunnelIp = ""
+    _lastConnected = connected
+    if (_stateKnown && prevConnected !== connected) {
+      if (connected && Model.shouldNotifyTransition(true, Date.now())) {
+        notify("Proton VPN connected", "Connected to " + Model.serverLabel(parsed.serverName, parsed.serverCity, parsed.serverCountry, ""), false)
+      } else if (!connected && Model.shouldNotifyTransition(false, Date.now())) {
+        notify("Proton VPN disconnected", "", false)
+      }
+    }
+    _stateKnown = true
   }
 
   function applyDeviceList(stdout) {
@@ -221,11 +252,17 @@ Item {
       var stderr = String(statusStderr.text || root._statusError || "")
       if (exitCode === 0) root.applyStatus(stdout)
       else {
+        var wasConnected = root._lastConnected
         root.refreshing = false
         root.connected = false
+        root._lastConnected = false
         root.backendState = "Unavailable"
         root.statusText = "CLI status failed"
         root.lastError = Model.elideStatus(stderr || stdout || "Could not read Proton VPN status")
+        if (root._stateKnown && wasConnected) {
+          root.notify("Proton VPN connection lost", root.lastError, true)
+        }
+        root._stateKnown = true
       }
     }
   }
@@ -265,6 +302,7 @@ Item {
         root.lastError = Model.elideStatus(stderr || stdout || "Proton VPN command failed")
         root.actionStatus = root.lastError
         actionStatusTimer.restart()
+        root.notify("Proton VPN action failed", root.lastError, true)
       }
       delayedRefresh.restart()
     }
