@@ -19,7 +19,8 @@
     "allowMultiple": false,
     "defaultSection": "right",
     "defaults": {
-      "refreshIntervalSec": 30
+      "refreshIntervalSec": 30,
+      "notificationsEnabled": true
     },
     "schema": [
       {
@@ -30,6 +31,13 @@
         "max": 3600,
         "step": 5,
         "defaultValue": 30
+      },
+      {
+        "key": "notificationsEnabled",
+        "type": "boolean",
+        "label": "Desktop notifications",
+        "description": "Show a notification when the VPN connects, disconnects, or fails.",
+        "defaultValue": true
       }
     ]
   }

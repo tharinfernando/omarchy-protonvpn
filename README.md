@@ -13,6 +13,8 @@ Status and one-click fastest-server connection for Proton VPN in the menu bar.
   - Tunnel IP
   - Collapsible list of free-server countries (click the header or press `s`)
   - Refresh action
+- Desktop notifications when the VPN connects, disconnects, or a command fails
+  (goes through the shell's notification daemon, so do-not-disturb applies).
 - Left click opens the panel.
 - Right click connects to the fastest eligible Proton server or disconnects.
 - Middle click refreshes status.
@@ -38,6 +40,8 @@ before using the bar toggle with this backend.
 
 - `proton-vpn-cli` installed and signed in
 - `wl-copy` for copy actions
+- `notify-send` for desktop notifications (disable with the
+  `notificationsEnabled` setting if it is not installed)
 
 Install the official Arch package with:
 
@@ -65,6 +69,7 @@ omarchy-shell shell rescanPlugins
 | Key                  | Type    | Default | Meaning                        |
 |----------------------|---------|---------|--------------------------------|
 | `refreshIntervalSec` | integer | 30      | CLI status poll interval       |
+| `notificationsEnabled` | boolean | true  | Desktop notifications on connect/disconnect/failure |
 
 Set it with:
 

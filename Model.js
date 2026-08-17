@@ -2,6 +2,19 @@
 
 .pragma library
 
+// Last transition that has already produced a desktop notification. The bar
+// mounts one Service per monitor, and every instance polls the same CLI;
+// deduping here keeps a connect/disconnect from notifying once per monitor.
+var _lastNotifiedTransition = { connected: false, at: 0 }
+var _notifyDedupeWindowMs = 45000
+
+function shouldNotifyTransition(connected, now) {
+  if (_lastNotifiedTransition.connected === connected && now - _lastNotifiedTransition.at < _notifyDedupeWindowMs) return false
+  _lastNotifiedTransition.connected = connected
+  _lastNotifiedTransition.at = now
+  return true
+}
+
 // Parses the official `protonvpn status` output:
 //
 //   Status: Connected
