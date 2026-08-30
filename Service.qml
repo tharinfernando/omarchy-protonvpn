@@ -22,6 +22,8 @@ Item {
   property string protocol: ""
   property string backendState: "Unknown"
   property string statusText: "Checking\u2026"
+  property string connectedUptime: ""
+  property var connectedSince: 0
   property string actionStatus: ""
   property string lastError: ""
   property var freeCountries: []
@@ -128,8 +130,14 @@ Item {
     refreshing = false
     backendState = connected ? "Connected" : "Disconnected"
     statusText = connected ? "Connected" : "Disconnected"
-    if (connected) refreshDevice()
-    else tunnelIp = ""
+    if (connected) {
+      refreshDevice()
+      if (!prevConnected && _stateKnown) connectedSince = Date.now()
+    } else {
+      tunnelIp = ""
+      connectedSince = 0
+    }
+    connectedUptime = connected ? formatUptime() : ""
     _lastConnected = connected
     if (_stateKnown && prevConnected !== connected) {
       if (connected && Model.shouldNotifyTransition(true, Date.now())) {
@@ -182,6 +190,12 @@ Item {
     actionStatusTimer.restart()
   }
 
+  // Formats the elapsed wall-clock time of the current session uptime.
+  function formatUptime() {
+    if (!connectedSince) return ""
+    return Model.formatUptime(Date.now() - connectedSince)
+  }
+
   Timer {
     id: refreshTimer
     interval: root.refreshIntervalSec * 1000
@@ -203,6 +217,14 @@ Item {
     interval: 2600
     repeat: false
     onTriggered: root.actionStatus = ""
+  }
+
+  Timer {
+    id: uptimeTimer
+    interval: 1000
+    repeat: true
+    running: root.connected
+    onTriggered: root.connectedUptime = root.formatUptime()
   }
 
   Timer {
