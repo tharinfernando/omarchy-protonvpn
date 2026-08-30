@@ -27,6 +27,7 @@ Item {
   property var freeCountries: []
   property bool refreshing: false
   property bool toggling: false
+  property bool disconnectArmed: false
 
   readonly property int refreshIntervalSec: intSetting("refreshIntervalSec", 30, 5, 3600)
   readonly property bool notificationsEnabled: boolSetting("notificationsEnabled", true)
@@ -129,7 +130,10 @@ Item {
     backendState = connected ? "Connected" : "Disconnected"
     statusText = connected ? "Connected" : "Disconnected"
     if (connected) refreshDevice()
-    else tunnelIp = ""
+    else {
+      tunnelIp = ""
+      root.cancelDisconnectConfirm()
+    }
     _lastConnected = connected
     if (_stateKnown && prevConnected !== connected) {
       if (connected && Model.shouldNotifyTransition(true, Date.now())) {
@@ -155,6 +159,30 @@ Item {
     if (toggling) return
     if (connected) disconnect()
     else connect()
+  }
+
+  // Right-click entry point: connecting works immediately, but disconnecting
+  // needs a second right-click within the confirm window to avoid accidental
+  // VPN drop while browsing.
+  function requestToggle() {
+    if (toggling) return
+    if (!connected) { connect(); return }
+    if (disconnectArmed) {
+      disconnectArmed = false
+      disconnectConfirmTimer.stop()
+      disconnect()
+      return
+    }
+    disconnectArmed = true
+    disconnectConfirmTimer.restart()
+    actionStatus = "Right-click again to disconnect"
+    actionStatusTimer.restart()
+    if (notificationsEnabled) notify("Disconnect?", "Right-click again to confirm disconnect", false)
+  }
+
+  function cancelDisconnectConfirm() {
+    disconnectArmed = false
+    disconnectConfirmTimer.stop()
   }
 
   function connect() {
@@ -203,6 +231,13 @@ Item {
     interval: 2600
     repeat: false
     onTriggered: root.actionStatus = ""
+  }
+
+  Timer {
+    id: disconnectConfirmTimer
+    interval: 2500
+    repeat: false
+    onTriggered: root.cancelDisconnectConfirm()
   }
 
   Timer {

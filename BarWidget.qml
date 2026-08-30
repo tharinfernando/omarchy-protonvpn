@@ -92,7 +92,7 @@ BarWidget {
       }
     }
     onPressed: function(buttonCode) {
-      if (buttonCode === Qt.RightButton) vpn.toggle()
+      if (buttonCode === Qt.RightButton) vpn.requestToggle()
       else if (buttonCode === Qt.MiddleButton) root.refresh()
       else root.togglePanel()
     }
