@@ -35,6 +35,11 @@ Item {
 
   readonly property int refreshIntervalSec: intSetting("refreshIntervalSec", 30, 5, 3600)
   readonly property bool notificationsEnabled: boolSetting("notificationsEnabled", true)
+  // Optimistic switch state: -1 follows the real `connected`, 0/1 is the
+  // desired state set the instant a toggle is clicked. The panel switch binds
+  // to this so its knob throws immediately instead of waiting for the next
+  // status poll, then reconciles with reality in applyStatus.
+  readonly property bool switchOn: _desiredConnected === -1 ? connected : (_desiredConnected === 1)
   readonly property bool busy: statusProcess.running || deviceProcess.running || deviceIpProcess.running || toggleProcess.running || whichProcess.running
   readonly property string serverListPath: (Quickshell.env("HOME") || "") + "/.cache/Proton/VPN/serverlist.json"
 
@@ -52,6 +57,7 @@ Item {
   property var _netBytes: null
   property var _netSampleAt: 0
   property string _netDevOutput: ""
+  property int _desiredConnected: -1
 
   function intSetting(name, fallback, min, max) {
     var v = parseInt(settings ? settings[name] : undefined, 10)
@@ -128,6 +134,9 @@ Item {
     var parsed = Model.parseCliStatus(stdout)
     var prevConnected = root._lastConnected
     connected = parsed.connected
+    // Once the real state matches the optimistic value, drop back to tracking
+    // reality so the knob always reflects the true connection.
+    if (_desiredConnected !== -1 && connected === (_desiredConnected === 1)) _desiredConnected = -1
     serverName = parsed.serverName
     serverCity = parsed.serverCity
     serverCountry = parsed.serverCountry
@@ -199,6 +208,7 @@ Item {
     if (toggling || connected) return
     toggling = true
     lastError = ""
+    _desiredConnected = 1
     actionStatus = "Connecting to fastest server\u2026"
     toggleProcess.command = ["protonvpn", "connect"]
     toggleProcess.running = true
@@ -208,6 +218,7 @@ Item {
     if (toggling || !connected) return
     toggling = true
     lastError = ""
+    _desiredConnected = 0
     actionStatus = "Disconnecting\u2026"
     toggleProcess.command = ["protonvpn", "disconnect"]
     toggleProcess.running = true
@@ -316,6 +327,7 @@ Item {
         var wasConnected = root._lastConnected
         root.refreshing = false
         root.connected = false
+        root._desiredConnected = -1
         root._lastConnected = false
         root.backendState = "Unavailable"
         root.statusText = "CLI status failed"
@@ -373,6 +385,9 @@ Item {
         root.actionStatus = root.lastError
         actionStatusTimer.restart()
         root.notify("Proton VPN action failed", root.lastError, true)
+        // The toggle failed — drop any optimistic state so the switch snaps
+        // back to the real connection state.
+        root._desiredConnected = -1
       }
       delayedRefresh.restart()
     }

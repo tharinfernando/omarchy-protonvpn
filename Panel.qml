@@ -220,7 +220,7 @@ Panel {
               trailingControl: Component {
                 ToggleSwitch {
                   id: powerSwitch
-                  checked: root.vpnOn
+                  checked: root.service ? root.service.switchOn : false
                   busy: root.service ? root.service.busy : false
                   hasCursor: header.ringVisible
                   foreground: hero.foreground
