@@ -59,6 +59,7 @@ Panel {
     if (service && service.tunnelIp !== "") info.push({ action: "copyIp", label: "Tunnel IP", hint: service.tunnelIp })
     if (service && service.protocol !== "") info.push({ action: "none", label: "Protocol", hint: service.protocol })
     if (service && service.serverLoad !== "") info.push({ action: "none", label: "Server load", hint: service.serverLoad })
+    if (service && service.connectedUptime !== "") info.push({ action: "none", label: "Connected for", hint: service.connectedUptime })
     if (service && service.freeCountries) {
       for (var i = 0; i < service.freeCountries.length; i++) {
         var country = service.freeCountries[i]

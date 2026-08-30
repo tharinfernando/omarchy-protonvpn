@@ -138,3 +138,14 @@ function elideStatus(text) {
   var value = String(text || "").replace(/\s+/g, " ").trim()
   return value.length > 140 ? value.substring(0, 137) + "\u2026" : value
 }
+
+// Formats a millisecond duration as a compact "1h 23m" / "45s" string.
+function formatUptime(ms) {
+  var total = Math.max(0, Math.floor(Number(ms) / 1000))
+  var hours = Math.floor(total / 3600)
+  var minutes = Math.floor((total % 3600) / 60)
+  var seconds = total % 60
+  if (hours > 0) return hours + "h " + minutes + "m"
+  if (minutes > 0) return minutes + "m " + seconds + "s"
+  return seconds + "s"
+}

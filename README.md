@@ -10,6 +10,7 @@ Status and one-click fastest-server connection for Proton VPN in the menu bar.
 - Details panel with:
   - Connected server and location
   - Server load and protocol
+  - Session uptime ("Connected for 2h 13m")
   - Tunnel IP
   - Collapsible list of free-server countries (click the header or press `s`)
   - Refresh action
