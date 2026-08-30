@@ -149,3 +149,29 @@ function formatUptime(ms) {
   if (minutes > 0) return minutes + "m " + seconds + "s"
   return seconds + "s"
 }
+
+// Extracts rx/tx byte counters for a specific interface from `cat /proc/net/dev`.
+function parseNetDev(text, device) {
+  if (!device) return null
+  var lines = String(text || "").split("\n")
+  for (var i = 0; i < lines.length; i++) {
+    var colon = lines[i].indexOf(":")
+    if (colon < 1) continue
+    var name = lines[i].substring(0, colon).replace(/\s/g, "")
+    if (name !== device) continue
+    var fields = lines[i].substring(colon + 1).trim().split(/\s+/)
+    if (fields.length < 9) return null
+    return { rx: Number(fields[0]) || 0, tx: Number(fields[8]) || 0 }
+  }
+  return null
+}
+
+// Formats bytes per second as a compact "1.2 MiB/s" / "340 KiB/s" string.
+function formatRate(bytes, seconds) {
+  var bps = seconds > 0 ? Math.max(0, bytes / seconds) : 0
+  var units = ["B", "KiB", "MiB", "GiB"]
+  var u = 0
+  var v = bps
+  while (v >= 1024 && u < units.length - 1) { v /= 1024; u++ }
+  return (v >= 100 ? v.toFixed(0) : v.toFixed(1)) + " " + units[u] + "/s"
+}

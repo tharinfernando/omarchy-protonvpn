@@ -15,6 +15,9 @@ Item {
   property bool installed: false
   property bool connected: false
   property string tunnelIp: ""
+  property string tunnelDevice: ""
+  property string rxRate: ""
+  property string txRate: ""
   property string serverName: ""
   property string serverCity: ""
   property string serverCountry: ""
@@ -46,6 +49,9 @@ Item {
   property string _serverListText: ""
   property bool _stateKnown: false
   property bool _lastConnected: false
+  property var _netBytes: null
+  property var _netSampleAt: 0
+  property string _netDevOutput: ""
 
   function intSetting(name, fallback, min, max) {
     var v = parseInt(settings ? settings[name] : undefined, 10)
@@ -153,10 +159,34 @@ Item {
     var device = Model.parseWireguardDevice(stdout)
     if (!device) {
       tunnelIp = ""
+      tunnelDevice = ""
+      rxRate = ""
+      txRate = ""
       return
     }
+    tunnelDevice = device
     deviceIpProcess.command = ["nmcli", "-g", "IP4.ADDRESS", "dev", "show", device]
     if (!deviceIpProcess.running) deviceIpProcess.running = true
+  }
+
+  function sampleTraffic() {
+    if (!connected || !tunnelDevice || netProcess.running) return
+    _netDevOutput = ""
+    netProcess.command = ["cat", "/proc/net/dev"]
+    netProcess.running = true
+  }
+
+  function applyNetDev(stdout) {
+    var bytes = Model.parseNetDev(String(stdout), tunnelDevice)
+    if (!bytes) return
+    var now = Date.now()
+    if (_netBytes) {
+      var dt = Math.max(1, now - _netSampleAt) / 1000
+      rxRate = Model.formatRate(Math.max(0, bytes.rx - _netBytes.rx), dt)
+      txRate = Model.formatRate(Math.max(0, bytes.tx - _netBytes.tx), dt)
+    }
+    _netBytes = bytes
+    _netSampleAt = now
   }
 
   function toggle() {
@@ -225,6 +255,15 @@ Item {
     repeat: true
     running: root.connected
     onTriggered: root.connectedUptime = root.formatUptime()
+  }
+
+  Timer {
+    id: trafficTimer
+    interval: 1500
+    repeat: true
+    running: root.connected && root.tunnelDevice !== ""
+    triggeredOnStart: true
+    onTriggered: root.sampleTraffic()
   }
 
   Timer {
@@ -305,6 +344,15 @@ Item {
     stdout: StdioCollector { id: deviceIpStdout; waitForEnd: true; onStreamFinished: root._deviceIpOutput = text }
     onExited: function() {
       root.tunnelIp = Model.parseDeviceIp(String(deviceIpStdout.text || root._deviceIpOutput || ""))
+    }
+  }
+
+  Process {
+    id: netProcess
+    command: []
+    stdout: StdioCollector { id: netStdout; waitForEnd: true; onStreamFinished: root._netDevOutput = text }
+    onExited: function(exitCode) {
+      if (exitCode === 0) root.applyNetDev(String(netStdout.text || root._netDevOutput || ""))
     }
   }
 

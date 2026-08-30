@@ -57,6 +57,8 @@ Panel {
     var actions = []
     if (serverLabel !== "") info.push({ action: "copyServer", label: "Server", hint: serverLabel })
     if (service && service.tunnelIp !== "") info.push({ action: "copyIp", label: "Tunnel IP", hint: service.tunnelIp })
+    if (service && service.rxRate !== "") info.push({ action: "none", label: "Download", hint: service.rxRate })
+    if (service && service.txRate !== "") info.push({ action: "none", label: "Upload", hint: service.txRate })
     if (service && service.protocol !== "") info.push({ action: "none", label: "Protocol", hint: service.protocol })
     if (service && service.serverLoad !== "") info.push({ action: "none", label: "Server load", hint: service.serverLoad })
     if (service && service.connectedUptime !== "") info.push({ action: "none", label: "Connected for", hint: service.connectedUptime })
