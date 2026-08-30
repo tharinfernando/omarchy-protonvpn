@@ -16,7 +16,9 @@ Status and one-click fastest-server connection for Proton VPN in the menu bar.
 - Desktop notifications when the VPN connects, disconnects, or a command fails
   (goes through the shell's notification daemon, so do-not-disturb applies).
 - Left click opens the panel.
-- Right click connects to the fastest eligible Proton server or disconnects.
+- Right click connects to the fastest eligible Proton server; while connected a
+  right click asks for confirmation first (right-click again within 2.5s to
+  disconnect, preventing accidental VPN drops).
 - Middle click refreshes status.
 - Keyboard navigation: `j`/`k`, `enter`, `t`, `c`, `s`, `r`, and `esc`.
 
