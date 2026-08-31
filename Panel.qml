@@ -236,6 +236,7 @@ Panel {
             width: parent.width
             visible: root.statusText !== ""
             text: root.statusText
+            textFormat: Text.PlainText
             color: root.hasError ? root.urgent : root.dim
             font.family: root.fontFamily
             font.pixelSize: Style.font.bodySmall
@@ -290,6 +291,7 @@ Panel {
                 anchors.rightMargin: Style.space(2)
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.countryRows.length + " countries"
+                textFormat: Text.PlainText
                 color: root.dim
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.caption
@@ -436,6 +438,7 @@ Panel {
       Text {
         id: rowLabel
         text: row.label
+        textFormat: Text.PlainText
         color: root.foreground
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
@@ -451,6 +454,7 @@ Panel {
         id: rowHint
         visible: row.hint !== ""
         text: row.hint
+        textFormat: Text.PlainText
         color: root.dim
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption

@@ -40,19 +40,19 @@ function parseCliStatus(text) {
     }
     var server = line.match(/^server\s*:\s*(.+?)\s+in\s+(.+)$/i)
     if (server) {
-      result.serverName = server[1].trim()
+      result.serverName = stripMarkup(server[1].trim())
       var location = server[2].trim().split(/\s*,\s*/)
-      result.serverCountry = location.length > 1 ? location[location.length - 1] : ""
-      result.serverCity = location.length > 1 ? location.slice(0, -1).join(", ") : location[0]
+      result.serverCountry = location.length > 1 ? stripMarkup(location[location.length - 1]) : ""
+      result.serverCity = location.length > 1 ? stripMarkup(location.slice(0, -1).join(", ")) : stripMarkup(location[0])
       continue
     }
     var load = line.match(/^load\s*:\s*(.+)$/i)
     if (load) {
-      result.load = load[1].trim()
+      result.load = stripMarkup(load[1].trim())
       continue
     }
     var protocol = line.match(/^protocol\s*:\s*(.+)$/i)
-    if (protocol) result.protocol = protocol[1].trim()
+    if (protocol) result.protocol = stripMarkup(protocol[1].trim())
   }
   return result
 }
@@ -76,12 +76,20 @@ function parseWireguardDevice(text) {
   return ""
 }
 
+// Removes angle-bracket markup from strings that originated from the Proton
+// VPN CLI. With Text.PlainText the text is rendered literally, so we only need
+// to strip any `<...>` fragments that would otherwise be interpreted as rich
+// text under Qt's default Text.AutoText.
+function stripMarkup(text) {
+  return String(text || "").replace(/<[^>]*>/g, "")
+}
+
 function serverLabel(serverName, serverCity, serverCountry, fallback) {
   var parts = []
-  if (serverName) parts.push(serverName)
-  if (serverCity) parts.push(serverCity)
-  if (serverCountry && serverCountry !== serverCity) parts.push(serverCountry)
-  if (parts.length === 0 && fallback) parts.push(fallback)
+  if (serverName) parts.push(stripMarkup(serverName))
+  if (serverCity) parts.push(stripMarkup(serverCity))
+  if (serverCountry && serverCountry !== serverCity) parts.push(stripMarkup(serverCountry))
+  if (parts.length === 0 && fallback) parts.push(stripMarkup(fallback))
   return parts.join(" \u00b7 ")
 }
 
@@ -90,7 +98,7 @@ function parseCountriesOutput(text) {
   var lines = String(text || "").split("\n")
   for (var i = 0; i < lines.length; i++) {
     var match = lines[i].match(/^\s*(.+?)\s{2,}([A-Z]{2})\s*$/)
-    if (match && match[2] !== "CO") names[match[2]] = match[1].trim()
+    if (match && match[2] !== "CO") names[match[2]] = stripMarkup(match[1].trim())
   }
   return names
 }
@@ -109,7 +117,7 @@ function freeCountryRows(raw, countryNames) {
       if (!result[code]) {
         result[code] = {
           code: code,
-          name: countryNames && countryNames[code] ? countryNames[code] : code,
+          name: countryNames && countryNames[code] ? stripMarkup(countryNames[code]) : code,
           count: 0,
           bestLoad: Number(server.Load)
         }
@@ -135,7 +143,7 @@ function freeCountryRows(raw, countryNames) {
 }
 
 function elideStatus(text) {
-  var value = String(text || "").replace(/\s+/g, " ").trim()
+  var value = stripMarkup(String(text || "").replace(/\s+/g, " ").trim())
   return value.length > 140 ? value.substring(0, 137) + "\u2026" : value
 }
 
