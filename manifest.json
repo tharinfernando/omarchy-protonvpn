@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "tharin.protonvpn",
   "name": "Proton VPN",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": "Tharin Fernando",
   "license": "MIT",
   "description": "Proton VPN status, connect/disconnect, and server info in the Omarchy bar.",
