@@ -33,7 +33,14 @@ Item {
   property bool refreshing: false
   property bool toggling: false
 
-  readonly property int refreshIntervalSec: intSetting("refreshIntervalSec", 30, 5, 3600)
+  // Poll cadence is adaptive: the fast interval keeps live rates, uptime, and
+  // connection drops fresh while a tunnel is up, and the slow idle interval
+  // backs off while disconnected. A disconnected bar therefore stops waking
+  // the Proton daemon every few seconds, only checking occasionally for an
+  // external connect.
+  readonly property int refreshIntervalSec: intSetting("refreshIntervalSec", 60, 5, 3600)
+  readonly property int idleRefreshIntervalSec: intSetting("idleRefreshIntervalSec", 300, 30, 3600)
+  readonly property int pollIntervalSec: connected ? refreshIntervalSec : idleRefreshIntervalSec
   readonly property bool notificationsEnabled: boolSetting("notificationsEnabled", true)
   // Optimistic switch state: -1 follows the real `connected`, 0/1 is the
   // desired state set the instant a toggle is clicked. The panel switch binds
@@ -239,7 +246,7 @@ Item {
 
   Timer {
     id: refreshTimer
-    interval: root.refreshIntervalSec * 1000
+    interval: root.pollIntervalSec * 1000
     repeat: true
     running: true
     triggeredOnStart: true
