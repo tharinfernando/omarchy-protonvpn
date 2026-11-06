@@ -19,18 +19,19 @@
     "allowMultiple": false,
     "defaultSection": "right",
     "defaults": {
-      "refreshIntervalSec": 30,
+      "refreshIntervalSec": 60,
       "notificationsEnabled": true
     },
     "schema": [
       {
         "key": "refreshIntervalSec",
         "type": "integer",
-        "label": "Refresh interval (seconds)",
+        "label": "Connected refresh interval (seconds)",
+        "description": "Status poll interval while connected. Disconnected status checks are event-driven and do not poll.",
         "min": 5,
         "max": 3600,
         "step": 5,
-        "defaultValue": 30
+        "defaultValue": 60
       },
       {
         "key": "notificationsEnabled",
