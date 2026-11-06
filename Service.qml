@@ -33,14 +33,11 @@ Item {
   property bool refreshing: false
   property bool toggling: false
 
-  // Poll cadence is adaptive: the fast interval keeps live rates, uptime, and
-  // connection drops fresh while a tunnel is up, and the slow idle interval
-  // backs off while disconnected. A disconnected bar therefore stops waking
-  // the Proton daemon every few seconds, only checking occasionally for an
-  // external connect.
+  // While connected the timer keeps live rates, uptime, and connection drops
+  // fresh. While disconnected the timer is stopped entirely: a NetworkManager
+  // watcher wakes us only when a network event could have brought a tunnel up,
+  // so an idle bar never runs `protonvpn status` or touches the Proton daemon.
   readonly property int refreshIntervalSec: intSetting("refreshIntervalSec", 60, 5, 3600)
-  readonly property int idleRefreshIntervalSec: intSetting("idleRefreshIntervalSec", 300, 30, 3600)
-  readonly property int pollIntervalSec: connected ? refreshIntervalSec : idleRefreshIntervalSec
   readonly property bool notificationsEnabled: boolSetting("notificationsEnabled", true)
   // Optimistic switch state: -1 follows the real `connected`, 0/1 is the
   // desired state set the instant a toggle is clicked. The panel switch binds
@@ -64,6 +61,7 @@ Item {
   property var _netBytes: null
   property var _netSampleAt: 0
   property string _netDevOutput: ""
+  property string _idleCheckOutput: ""
   property int _desiredConnected: -1
 
   function intSetting(name, fallback, min, max) {
@@ -135,6 +133,30 @@ Item {
       deviceProcess.command = ["nmcli", "-t", "-f", "DEVICE,TYPE,STATE", "dev", "status"]
       deviceProcess.running = true
     }
+  }
+
+  // Keeps the NetworkManager watcher alive only while disconnected. It is a
+  // sleeping process, not a poll: it forwards device/connectivity changes to
+  // onNetworkMonitorLine, and the next `protonvpn status` only runs if one of
+  // those changes actually produced a WireGuard device.
+  function updateIdleMonitor() {
+    var wanted = installed && !connected
+    if (networkMonitor.running === wanted) return
+    networkMonitor.running = wanted
+    if (!wanted) idleMonitorRetry.stop()
+  }
+
+  function checkIdleTunnel() {
+    if (!installed || connected || idleCheckProcess.running) return
+    _idleCheckOutput = ""
+    idleCheckProcess.command = ["nmcli", "-t", "-f", "DEVICE,TYPE,STATE", "dev", "status"]
+    idleCheckProcess.running = true
+  }
+
+  function onNetworkMonitorLine(line) {
+    if (connected) return
+    var text = String(line || "")
+    if (text.indexOf(":") !== -1 || text.indexOf("NetworkManager is now") !== -1) checkIdleTunnel()
   }
 
   function applyStatus(stdout) {
@@ -244,13 +266,25 @@ Item {
     return Model.formatUptime(Date.now() - connectedSince)
   }
 
+  Component.onCompleted: root.refresh()
+  onInstalledChanged: root.updateIdleMonitor()
+  onConnectedChanged: root.updateIdleMonitor()
+
   Timer {
     id: refreshTimer
-    interval: root.pollIntervalSec * 1000
+    interval: root.refreshIntervalSec * 1000
     repeat: true
-    running: true
-    triggeredOnStart: true
+    running: root.connected
     onTriggered: root.refresh()
+  }
+
+  Timer {
+    id: idleMonitorRetry
+    interval: 5000
+    repeat: false
+    onTriggered: {
+      if (!root.connected && root.installed && !networkMonitor.running) networkMonitor.running = true
+    }
   }
 
   Timer {
@@ -308,6 +342,26 @@ Item {
         root.backendState = "Unavailable"
         root.statusText = "Proton CLI not found"
       }
+    }
+  }
+
+  Process {
+    id: networkMonitor
+    command: ["nmcli", "monitor"]
+    stdout: SplitParser { onRead: function(line) { root.onNetworkMonitorLine(line) } }
+    onStarted: root.checkIdleTunnel()
+    onExited: function() {
+      if (!root.connected) idleMonitorRetry.restart()
+    }
+  }
+
+  Process {
+    id: idleCheckProcess
+    command: []
+    stdout: StdioCollector { id: idleCheckStdout; waitForEnd: true; onStreamFinished: root._idleCheckOutput = text }
+    onExited: function(exitCode) {
+      var stdout = String(idleCheckStdout.text || root._idleCheckOutput || "")
+      if (exitCode === 0 && !root.connected && Model.parseWireguardDevice(stdout) !== "") root.refresh()
     }
   }
 

@@ -72,19 +72,19 @@ omarchy-shell shell rescanPlugins
 | Key                  | Type    | Default | Meaning                        |
 |----------------------|---------|---------|--------------------------------|
 | `refreshIntervalSec` | integer | 60      | Status poll interval while connected |
-| `idleRefreshIntervalSec` | integer | 300 | Status poll interval while disconnected |
 | `notificationsEnabled` | boolean | true  | Desktop notifications on connect/disconnect/failure |
 
-Polling is adaptive: the bar polls at `refreshIntervalSec` while connected so
-live rates, uptime, and drops stay fresh, then backs off to
-`idleRefreshIntervalSec` while disconnected so it stops waking the Proton
-daemon every few seconds.
+Polling only runs while connected, where `refreshIntervalSec` keeps live
+rates, uptime, and connection drops fresh. While disconnected the timer stops
+completely, so no `protonvpn status` process is spawned and the Proton daemon
+is not woken. A NetworkManager watcher triggers a status check only when a
+network event could mean a WireGuard tunnel came up; manual refresh still
+works from the panel and middle click.
 
 Set it with:
 
 ```bash
 omarchy bar set tharin.protonvpn refreshIntervalSec 60
-omarchy bar set tharin.protonvpn idleRefreshIntervalSec 300
 ```
 
 ## Removal

@@ -20,7 +20,6 @@
     "defaultSection": "right",
     "defaults": {
       "refreshIntervalSec": 60,
-      "idleRefreshIntervalSec": 300,
       "notificationsEnabled": true
     },
     "schema": [
@@ -28,20 +27,11 @@
         "key": "refreshIntervalSec",
         "type": "integer",
         "label": "Connected refresh interval (seconds)",
+        "description": "Status poll interval while connected. Disconnected status checks are event-driven and do not poll.",
         "min": 5,
         "max": 3600,
         "step": 5,
         "defaultValue": 60
-      },
-      {
-        "key": "idleRefreshIntervalSec",
-        "type": "integer",
-        "label": "Disconnected refresh interval (seconds)",
-        "description": "Status poll interval while disconnected. A longer interval reduces background wake-ups of the Proton daemon.",
-        "min": 30,
-        "max": 3600,
-        "step": 30,
-        "defaultValue": 300
       },
       {
         "key": "notificationsEnabled",
